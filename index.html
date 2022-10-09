@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">hello</div>
+    <script src="./dist/vue.js"></script>
+    <script>
+        // 响应式 vue2 借鉴了 mvvm模式 数据改变试图 视图改变数据 
+        let vm = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    msg: 'hello',
+                    a: { b: 20 },
+                    list: [1, 2, 3]
+                }
+            },
+            prpos: {},
+            watch: {}
+        })
+        // console.log(vm._data);
+        console.log(vm._data.a = { c: 30 });
+    </script>
+</body>
+
+</html>
