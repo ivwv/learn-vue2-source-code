@@ -4,6 +4,25 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 })(this, (function () { 'use strict';
 
+  // （1）重写数组的 push() 函数
+  let oldArrayProtoMethods = Array.prototype;
+
+  // （2）继承
+  let ArrayMethods = Object.create(oldArrayProtoMethods);
+
+  // (3) 劫持
+  let methods = ['push', 'pop', 'unshift', 'shift', 'slice'];
+
+  methods.forEach((item) => {
+    ArrayMethods[item] = function (...args) {
+      // {list:[]}
+      console.log('劫持数组');
+      // 通过 aldArr.apply(this,args) 劫持旧的数组方法 ，改变旧的数组方法为当前的新数组方法
+      let result = oldArrayProtoMethods[item].apply(this, args);
+      return result
+    };
+  });
+
   function observer(data) {
     //   console.log(data)
     // 1.判断
@@ -18,7 +37,12 @@
       // 判断数据
       console.log(value);
       if (Array.isArray(value)) {
+        // 数组给数组的原型添加重写数组的方法
+        value.__proto__ = ArrayMethods;
         console.log('数组');
+        // 如果是数组对象
+        //处理数组对象的劫持
+        this.observerArray(value);
       } else {
         this.walk(value); // 遍历
       }
@@ -33,6 +57,8 @@
         defineReactive(data, key, value);
       }
     }
+    // [{a:1}]
+    observerArray(value) {}
   }
 
   // 对对象中的属性进行劫持

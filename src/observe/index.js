@@ -1,3 +1,5 @@
+import { ArrayMethods } from './arr'
+
 export function observer(data) {
   //   console.log(data)
   // 1.判断
@@ -12,7 +14,12 @@ class Observer {
     // 判断数据
     console.log(value)
     if (Array.isArray(value)) {
+      // 数组给数组的原型添加重写数组的方法
+      value.__proto__ = ArrayMethods
       console.log('数组')
+      // 如果是数组对象
+      //处理数组对象的劫持
+      this.observerArray(value)
     } else {
       this.walk(value) // 遍历
     }
@@ -27,6 +34,8 @@ class Observer {
       defineReactive(data, key, value)
     }
   }
+  // [{a:1}]
+  observerArray(value) {}
 }
 
 // 对对象中的属性进行劫持
