@@ -2,6 +2,8 @@ import { ArrayMethods } from './arr'
 
 export function observer(data) {
   //   console.log(data)
+  // 给 value 定义一个属性
+
   // 1.判断
   if (typeof data != 'object' || data == null) {
     return data
@@ -11,12 +13,16 @@ export function observer(data) {
 }
 class Observer {
   constructor(value) {
+    Object.defineProperty(value, '__ob__', {
+      enumersble: false,
+      value: this,
+    })
     // 判断数据
-    console.log(value)
+    // console.log(value)
     if (Array.isArray(value)) {
       // 数组给数组的原型添加重写数组的方法
       value.__proto__ = ArrayMethods
-      console.log('数组')
+      // console.log('数组')
       // 如果是数组对象
       //处理数组对象的劫持
       this.observerArray(value)
@@ -34,8 +40,13 @@ class Observer {
       defineReactive(data, key, value)
     }
   }
+  // 解决数组内队对象形式
   // [{a:1}]
-  observerArray(value) {}
+  observerArray(value) {
+    for (let i = 0; i < value.length; i++) {
+      observer(value[i])
+    }
+  }
 }
 
 // 对对象中的属性进行劫持
@@ -56,12 +67,12 @@ function defineReactive(data, key, value) {
   Object.defineProperty(data, key, {
     // 获取触发
     get() {
-      console.log('获取')
+      // console.log('获取')
       return value
     },
     // 设置触发
     set(newValue) {
-      console.log('设置值')
+      // console.log('设置值')
       // 判断新值是否和旧值一样 ，一样就返回
       if (newValue == value) return
       /**

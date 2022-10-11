@@ -16,15 +16,35 @@
   methods.forEach((item) => {
     ArrayMethods[item] = function (...args) {
       // {list:[]}
-      console.log('劫持数组');
+      // console.log('劫持数组')
       // 通过 aldArr.apply(this,args) 劫持旧的数组方法 ，改变旧的数组方法为当前的新数组方法
       let result = oldArrayProtoMethods[item].apply(this, args);
+      // console.log(args)
+      // 数组追加对象的情况 要进行劫持  arr.push({a:1})   arr.unsfift
+      let inserted;
+      switch (item) {
+        case 'push':
+        case 'unshift':
+          inserted = args;
+          break
+        case 'splice':
+          inserted = args.splice(2); // arr.splice(0,1,{a:6})
+      }
+      // console.log(inserted)
+      let ob = this.__ob__; // 得到
+      // 判断
+      if (inserted) {
+        ob.observerArray(inserted); //对我们添加的对象进行劫持
+      }
+
       return result
     };
   });
 
   function observer(data) {
     //   console.log(data)
+    // 给 value 定义一个属性
+
     // 1.判断
     if (typeof data != 'object' || data == null) {
       return data
@@ -34,12 +54,16 @@
   }
   class Observer {
     constructor(value) {
+      Object.defineProperty(value, '__ob__', {
+        enumersble: false,
+        value: this,
+      });
       // 判断数据
-      console.log(value);
+      // console.log(value)
       if (Array.isArray(value)) {
         // 数组给数组的原型添加重写数组的方法
         value.__proto__ = ArrayMethods;
-        console.log('数组');
+        // console.log('数组')
         // 如果是数组对象
         //处理数组对象的劫持
         this.observerArray(value);
@@ -57,8 +81,13 @@
         defineReactive(data, key, value);
       }
     }
+    // 解决数组内队对象形式
     // [{a:1}]
-    observerArray(value) {}
+    observerArray(value) {
+      for (let i = 0; i < value.length; i++) {
+        observer(value[i]);
+      }
+    }
   }
 
   // 对对象中的属性进行劫持
@@ -79,12 +108,12 @@
     Object.defineProperty(data, key, {
       // 获取触发
       get() {
-        console.log('获取');
+        // console.log('获取')
         return value
       },
       // 设置触发
       set(newValue) {
-        console.log('设置值');
+        // console.log('设置值')
         // 判断新值是否和旧值一样 ，一样就返回
         if (newValue == value) return
         /**
@@ -104,7 +133,7 @@
 
   function initState(vm) {
     let opts = vm.$options;
-    //   console.log(opts)
+    // console.log(opts)
     //   判断
     if (opts.props) ;
     if (opts.data) {
@@ -120,9 +149,28 @@
     // console.log('data初始化')
     let data = vm.$options.data;
     data = vm._data = typeof data === 'function' ? data.call(vm) : data;
-    //   console.log(data)
+    // console.log(data)
+
+    // 将 data上的说所有属性代理到 实例上 {a:1,b:2}
+    for (let key in data) {
+      proxy(vm, '_data', key);
+    }
+
     // 对数据进行劫持
     observer(data);
+  }
+
+  function proxy(vm, source, key) {
+    Object.defineProperty(vm, key, {
+      get() {
+        // console.log('proxy-get')
+        return vm[source][key]
+      },
+      set(newValue) {
+        // console.log('proxy-set')
+        vm[source][key] = newValue;
+      },
+    });
   }
 
   function initMixin(Vue) {
